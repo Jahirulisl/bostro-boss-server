@@ -30,6 +30,10 @@ async function run() {
 
     await client.connect();
 
+    //user details collection start>
+    const userCollection = client.db("bistroDb").collection("users");
+    //user details collection end>
+
     // Get the  menu database and collection start>
     const menuCollection = client.db("bistroDb").collection("menu");
 
@@ -38,6 +42,14 @@ async function run() {
     //if collection data for carts start>
     const cartCollection = client.db("bistroDb").collection("carts");
 
+    //users reletade api st
+    app.post('/users', async (req, res) => {
+      const user = req.body;
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    })
+    //users reletade api end
+    
     app.get('/menu', async (req, res) => {
       const result = await menuCollection.find().toArray();
       res.send(result);
@@ -49,11 +61,11 @@ async function run() {
     })
 
     // // carts collection start>
-    
-    app.get('/cart',async(req, res)=>{  
+
+    app.get('/cart', async (req, res) => {
       //user email ta anlam st
       const email = req.query.email;
-      const query ={email:email};
+      const query = { email: email };
       //user email ta anlam end
 
       const result = await cartCollection.find(query).toArray();
@@ -68,12 +80,12 @@ async function run() {
     //carts collection end>
 
     //for api delete option st
-   app.delete('/cart/:id', async(req, res) =>{
-    const id = req.params.id;
-    const query = {_id: new ObjectId(id)};
-    const result = await cartCollection.deleteOne(query);
-    res.send(result);
-   })
+    app.delete('/cart/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await cartCollection.deleteOne(query);
+      res.send(result);
+    })
     //for delete api end
 
     // Get the nenu database and collection end>
