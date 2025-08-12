@@ -45,11 +45,21 @@ async function run() {
     //users reletade api st
     app.post('/users', async (req, res) => {
       const user = req.body;
+      
+      //insert email if user doesnt exists
+      //you  can do this many ways(email unique,upsert, simple checking)
+     const query = {email:user.email}
+     const existingUser =await userCollection.findOne(query);
+     if(existingUser){
+      return res.send({message: 'user already exists',insertedId:null})
+     }
+      //insert email if user doesnt exists end
+
       const result = await userCollection.insertOne(user);
       res.send(result);
     })
     //users reletade api end
-    
+
     app.get('/menu', async (req, res) => {
       const result = await menuCollection.find().toArray();
       res.send(result);
