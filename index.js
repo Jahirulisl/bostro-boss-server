@@ -43,9 +43,16 @@ async function run() {
     const cartCollection = client.db("bistroDb").collection("carts");
 
     //users reletade api st
+          //manage alluser data paowa st
+   app.get('/users', async (req,res) =>{
+    const result = await userCollection.find().toArray();
+    res.send(result);
+   });      
+           //manage alluser data  end
+      
     app.post('/users', async (req, res) => {
       const user = req.body;
-      
+
       //insert email if user doesnt exists
       //you  can do this many ways(email unique,upsert, simple checking)
      const query = {email:user.email}
@@ -100,12 +107,13 @@ async function run() {
 
     // Get the nenu database and collection end>
 
-
-
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
+  } catch (error) {
+    console.error("mongoDB cannectionh error:",error)
+  }
+   finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
   }
