@@ -6,6 +6,10 @@ require('dotenv').config();
 // from dot env config end>
 const port = process.env.PORT || 5000;
 
+ //from jwt jason tokan strt>
+const jwt = require('jsonwebtoken');
+//from jwt jason tokan end>
+
 //middleware 
 app.use(cors());
 app.use(express.json());
@@ -42,17 +46,29 @@ async function run() {
     //if collection data for carts start>
     const cartCollection = client.db("bistroDb").collection("carts");
 
+    //jwt releted api start>
+   app.post('/jwt', async(req, res) =>{
+    const user = req.body;
+    const token = jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{expiresIn: '1h'})
+    res.send({token});
+   })
+    //jwt releted api end>
+      // midleware/ veryfy token start
+  
+
+       // midleware/ veryfy token start
     //users reletade api st
-          //manage alluser data paowa st
+       //manage alluser data lod st
    app.get('/users', async (req,res) =>{
+    // console.log(req.headers);
     const result = await userCollection.find().toArray();
     res.send(result);
    });      
-           //manage alluser data  end
+     //manage alluser data load  end
       
+           //j kono kicu post/add kora start>
     app.post('/users', async (req, res) => {
       const user = req.body;
-
       //insert email if user doesnt exists
       //you  can do this many ways(email unique,upsert, simple checking)
      const query = {email:user.email}
@@ -66,6 +82,20 @@ async function run() {
       res.send(result);
     })
     //users reletade api end
+
+    //make admin api start
+   app.patch('/user/admin/:id', async(req,res) =>{
+    const id = req.params.id;
+    const filter = {_id: new ObjectId(id)};
+    const updateDoc = {
+      $set:{
+        role: 'admin'
+      }
+    };
+    const result = await userCollection.updateOne(filter,updateDoc)
+    res.send(result);
+   })
+    //make admin api end
   
     //use user detaile data delete st
    app.delete('/user/:id',async (req,res) => {
@@ -82,15 +112,15 @@ async function run() {
       const result = await menuCollection.find().toArray();
       res.send(result);
     })
-    //rivews data loaded start....
-    app.get('/reviews', async (req, res) => {
+
+     //rivews data loaded start....
+     app.get('/reviews', async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result);
-    })
+     })
 
-    // // carts collection start>
-
-    app.get('/cart', async (req, res) => {
+     // carts collection start>
+     app.get('/cart', async (req, res) => {
       //user email ta anlam st
       const email = req.query.email;
       const query = { email: email };
@@ -98,14 +128,16 @@ async function run() {
 
       const result = await cartCollection.find(query).toArray();
       res.send(result);
-    })
+     })
+     //carts collection end>
 
-    app.post('/carts', async (req, res) => {
+     //for post/add carts data start
+     app.post('/carts', async (req, res) => {
       const cartItem = req.body;
       const result = await cartCollection.insertOne(cartItem);
       res.send(result);
-    })
-    //carts collection end>
+     })
+    //for post/add carts data end
 
     //for api delete option st
     app.delete('/cart/:id', async (req, res) => {
