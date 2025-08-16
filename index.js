@@ -6,7 +6,7 @@ require('dotenv').config();
 // from dot env config end>
 const port = process.env.PORT || 5000;
 
- //from jwt jason tokan strt>
+//from jwt jason tokan strt>
 const jwt = require('jsonwebtoken');
 //from jwt jason tokan end>
 
@@ -47,35 +47,50 @@ async function run() {
     const cartCollection = client.db("bistroDb").collection("carts");
 
     //jwt releted api start>
-   app.post('/jwt', async(req, res) =>{
-    const user = req.body;
-    const token = jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{expiresIn: '1h'})
-    res.send({token});
-   })
+    app.post('/jwt', async (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+      res.send({ token });
+    })
     //jwt releted api end>
-      // midleware/ veryfy token start
-  
 
-       // midleware/ veryfy token start
+    // midleware/ veryfy token start
+    const verifyToken = (req, res, next) => {
+      console.log('inside verifyToken', req.headers.authorization);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ massege: 'forbidan access' });
+      }
+      const token = req.headers.authorization.split('')[1];
+      jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(401).send({
+           message: 'forbiden access'
+          })
+        }
+        req.decoded = decoded;
+        next();
+      })
+      // verify token end
+    }
+    // midleware/ veryfy token start
     //users reletade api st
-       //manage alluser data lod st
-   app.get('/users', async (req,res) =>{
-    // console.log(req.headers);
-    const result = await userCollection.find().toArray();
-    res.send(result);
-   });      
-     //manage alluser data load  end
-      
-           //j kono kicu post/add kora start>
+    //manage alluser data lod st
+    app.get('/users', verifyToken, async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+    //manage alluser data load  end
+
+    //j kono kicu post/add kora start>
     app.post('/users', async (req, res) => {
       const user = req.body;
       //insert email if user doesnt exists
       //you  can do this many ways(email unique,upsert, simple checking)
-     const query = {email:user.email}
-     const existingUser =await userCollection.findOne(query);
-     if(existingUser){
-      return res.send({message: 'user already exists',insertedId:null})
-     }
+      const query = { email: user.email }
+      const existingUser = await userCollection.findOne(query);
+      if (existingUser) {
+        return res.send({ message: 'user already exists', insertedId: null })
+      }
       //insert email if user doesnt exists end
 
       const result = await userCollection.insertOne(user);
@@ -84,43 +99,43 @@ async function run() {
     //users reletade api end
 
     //make admin api start
-   app.patch('/user/admin/:id', async(req,res) =>{
-    const id = req.params.id;
-    const filter = {_id: new ObjectId(id)};
-    const updateDoc = {
-      $set:{
-        role: 'admin'
-      }
-    };
-    const result = await userCollection.updateOne(filter,updateDoc)
-    res.send(result);
-   })
+    app.patch('/user/admin/:id', async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: 'admin'
+        }
+      };
+      const result = await userCollection.updateOne(filter, updateDoc)
+      res.send(result);
+    })
     //make admin api end
-  
+
     //use user detaile data delete st
-   app.delete('/user/:id',async (req,res) => {
-    const id = req.params.id;
-    const query = {
-      _id:new ObjectId(id)
-    }
-    const result = await userCollection.deleteOne(query);
-    res.send(result);
-   })
-   //use user detaile data delete end
+    app.delete('/user/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = {
+        _id: new ObjectId(id)
+      }
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
+    })
+    //use user detaile data delete end
     //menu reletade api st
     app.get('/menu', async (req, res) => {
       const result = await menuCollection.find().toArray();
       res.send(result);
     })
 
-     //rivews data loaded start....
-     app.get('/reviews', async (req, res) => {
+    //rivews data loaded start....
+    app.get('/reviews', async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result);
-     })
+    })
 
-     // carts collection start>
-     app.get('/cart', async (req, res) => {
+    // carts collection start>
+    app.get('/cart', async (req, res) => {
       //user email ta anlam st
       const email = req.query.email;
       const query = { email: email };
@@ -128,15 +143,15 @@ async function run() {
 
       const result = await cartCollection.find(query).toArray();
       res.send(result);
-     })
-     //carts collection end>
+    })
+    //carts collection end>
 
-     //for post/add carts data start
-     app.post('/carts', async (req, res) => {
+    //for post/add carts data start
+    app.post('/carts', async (req, res) => {
       const cartItem = req.body;
       const result = await cartCollection.insertOne(cartItem);
       res.send(result);
-     })
+    })
     //for post/add carts data end
 
     //for api delete option st
@@ -154,9 +169,9 @@ async function run() {
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } catch (error) {
-    console.error("mongoDB cannectionh error:",error)
+    console.error("mongoDB cannectionh error:", error)
   }
-   finally {
+  finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
   }
